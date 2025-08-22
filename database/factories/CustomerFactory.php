@@ -14,10 +14,13 @@ class CustomerFactory extends Factory
 
     public function definition(): array
     {
+        $firstName = fake()->firstName();
+        $lastName = fake()->lastName();
+
         return [
-            'first_name' => fake()->firstName(),
-            'last_name' => fake()->lastName(),
-            'email' => fake()->unique()->safeEmail(),
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'email' => strtolower($firstName).'.'.strtolower($lastName).'@example.com',
             'phone' => fake()->phoneNumber(),
             'address' => fake()->streetAddress(),
             'city' => fake()->city(),

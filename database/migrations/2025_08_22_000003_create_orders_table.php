@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('customer_id')->constrained()->cascadeOnDelete();
+            $table->unsignedBigInteger('customer_id');
             $table->timestamp('placed_at')->nullable();
             $table->string('status')->default('pending');
             $table->timestamps();

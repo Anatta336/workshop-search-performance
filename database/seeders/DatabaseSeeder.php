@@ -4,8 +4,6 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use Illuminate\Database\Seeder;
-use Database\Seeders\ProductSeeder;
-use Database\Seeders\CustomerOrderSeeder;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,6 +18,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $this->call(ProductSeeder::class);
-        $this->call(CustomerOrderSeeder::class);
+        $this->call(CustomerSeeder::class);
+        $this->call(OrderSeeder::class);
     }
 }
