@@ -1,3 +1,8 @@
+- This project is running in Docker containers. Do not run `php` or `composer` or `artisan` or `npm` or `node` commands directly on the host machine. Instead use:
+    - `docker compose run --rm app php artisan`
+    - `docker compose run --rm composer`
+- You can assume the docker containers are already running, which includes `npm run dev` running in the `node` Docker service. You typically do not need to start them yourself.
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
