@@ -1,0 +1,77 @@
+services:
+  app:
+    # using a maintained PHP image with common extensions (pdo_mysql, mbstring, etc.)
+    image: chialab/php:8.3-fpm
+    container_name: sp_app
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html:cached
+    depends_on:
+      - db
+    networks:
+      - sp_network
+    command: bash -lc "chown -R www-data:www-data storage bootstrap/cache 2>/dev/null || true; chmod -R ug+rwX storage bootstrap/cache 2>/dev/null || true; php-fpm"
+
+  web:
+    image: nginx:stable-alpine
+    container_name: sp_web
+    ports:
+      - "${DOCKER_WEB_PORT:-8080}:80"
+    volumes:
+      - ./:/var/www/html:ro
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - app
+    networks:
+      - sp_network
+
+  db:
+    image: mysql:8.0
+    container_name: sp_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-homestead}
+      MYSQL_USER: ${DB_USERNAME:-homestead}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - sp_network
+
+  node:
+    image: node:20
+    container_name: sp_node
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+      - node_modules:/var/www/html/node_modules
+    command: bash -lc "npm install && npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}"
+    ports:
+      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VITE_HMR_HOST: "localhost"
+    depends_on:
+      - app
+    networks:
+      - sp_network
+
+  composer:
+    image: composer:2
+    container_name: sp_composer
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    networks:
+      - sp_network
+
+volumes:
+  dbdata:
+  node_modules:
+
+networks:
+  sp_network:
+    driver: bridge
