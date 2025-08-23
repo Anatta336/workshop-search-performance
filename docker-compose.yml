@@ -35,7 +35,7 @@ services:
       MYSQL_USER: ${DB_USERNAME:-homestead}
       MYSQL_PASSWORD: ${DB_PASSWORD:-secret}
     ports:
-      - "${DB_PORT:-3306}:3306"
+      - "${DB_EXTERNAL_PORT:-3306}:3306"
     volumes:
       - dbdata:/var/lib/mysql
     networks:

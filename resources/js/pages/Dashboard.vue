@@ -3,6 +3,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, type AppPageProps } from '@/types';
 import { Head, Link, usePage } from '@inertiajs/vue3';
 import { computed } from 'vue';
+import CustomerSearch from '@/components/CustomerSearch.vue';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -79,6 +80,10 @@ function formatPence(pence: number): string {
                     <div class="text-xs text-muted-foreground">Total Value</div>
                     <div class="text-2xl font-semibold">{{ formatPence(metrics.total_value_pence) }}</div>
                 </div>
+            </div>
+
+            <div class="mt-4">
+                <CustomerSearch />
             </div>
         </div>
     </AppLayout>

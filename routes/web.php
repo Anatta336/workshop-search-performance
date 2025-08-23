@@ -13,6 +13,7 @@ Route::get('dashboard', [App\Http\Controllers\DashboardController::class, 'index
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/customers', [App\Http\Controllers\CustomerController::class, 'index'])->name('customers.index');
+    Route::get('/customers/search', \App\Http\Controllers\CustomerSearchController::class)->name('customers.search');
     Route::get('/customers/{customer}', [App\Http\Controllers\CustomerController::class, 'show'])->name('customers.show');
     Route::get('/orders', [App\Http\Controllers\OrderController::class, 'index'])->name('orders.index');
 });
