@@ -47,12 +47,14 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
+    # Install dependencies and start the Vite development server as soon as the container starts.
     command: bash -lc "npm install && npm run dev -- --host 0.0.0.0 --port ${VITE_PORT:-5173}"
     ports:
       - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
     environment:
       CHOKIDAR_USEPOLLING: "true"
       VITE_HMR_HOST: "localhost"
+      VITE_PORT: "${VITE_PORT:-5173}"
     depends_on:
       - app
     networks:
@@ -64,6 +66,11 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./:/var/www/html
+    environment:
+      - GIT_CONFIG_GLOBAL=/tmp/gitconfig
+    # Configure git to allow running composer in a bind-mounted directory,
+    # and then run the usual composer entrypoint.
+    entrypoint: sh -c "echo '[safe]' > /tmp/gitconfig && echo '    directory = /var/www/html' >> /tmp/gitconfig && /docker-entrypoint.sh composer \"$$@\"" --
     networks:
       - sp_network
 

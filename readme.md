@@ -40,7 +40,7 @@ git clone https://github.com/Anatta336/workshop-search-performance.git
 cd workshop-search-performance
 docker compose up -d
 docker compose run --rm composer install
-docker compose run --rm app php artisan migrate:fresh --seed
+docker compose execute app php artisan migrate:fresh --seed
 ```
 The seeders create a very large number of records and may take a couple of minutes to complete.
 
@@ -48,7 +48,7 @@ Access the site at http://localhost:8089/dashboard
 
 If you need to change the ports used, edit the `.env` file.
 
-You should be able to register a new user and then log in.
+You should be able to either log in as `test@example.com` with `password!.` or register a new user and then log in.
 
 When the project is no longer needed:
 ```
@@ -63,21 +63,38 @@ docker compose up -d
 The frontend assets are automatically rebuilt and hot loaded via the `node` service defined in `docker-compose.yml`, which creates a Docker container named `sp_node`.
 
 To run artisan commands using the `app` service:
+(Using `exec` instead of `run` as we can use the already running container.)
 ```
-docker compose run --rm app php artisan inspire
+docker compose exec app php artisan inspire
 ```
 
 To access composer using the `composer` service:
+(The composer service isn't usually running, so we use `run --rm` to start it up and remove it once we're done.)
 ```
-docker compose run --rm composer
+docker compose run --rm composer show --installed
 ```
 
 To run tests using the `app` service:
 ```
-docker compose run --rm app php artisan test
+docker compose exec app php artisan test
 ```
 
 When the project is no longer needed:
 ```
 docker compose stop
+```
+
+### Clean up
+The database used by this project is stored in a persistant Docker volume. We generate quite a lot of records so you'll want to clean it up once you're done with the project.
+
+You can find and delete it in the Docker Desktop GUI, or:
+
+List what volumes you have:
+```
+docker volume ls
+```
+
+Remove the dbdata volume created for this project.
+```
+docker volume rm search-performance_dbdata
 ```
