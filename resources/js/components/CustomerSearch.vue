@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onUnmounted } from 'vue';
+import { ref, watch, onUnmounted, computed } from 'vue';
 import { Link } from '@inertiajs/vue3';
 import { route } from 'ziggy-js';
 
@@ -11,97 +11,115 @@ type CustomerSearchResult = {
     total_value_pence: number;
 };
 
-const query = ref<string>('');
+const query = ref('');
 const results = ref<CustomerSearchResult[]>([]);
-const loading = ref<boolean>(false);
-const cheat = ref<boolean>(true);
+const loading = ref(false);
+const cheat = ref(true);
 
-let timer: number | null = null;
-let currentController: AbortController | null = null;
+let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+let abortController: AbortController | null = null;
 
-watch(query, (searchTerm: string) => {
-    if (timer) {
-        clearTimeout(timer);
-    }
-    timer = window.setTimeout(() => fetchResults(searchTerm, cheat.value), 150) as unknown as number;
+const hasQuery = computed(() => query.value.trim().length > 0);
+const showNoResults = computed(() => !loading.value && hasQuery.value && results.value.length === 0);
+
+const currencyFormatter = new Intl.NumberFormat('en-GB', {
+    style: 'currency',
+    currency: 'GBP'
 });
 
-function customerUrl(id: number) {
-    return route('customers.show', id) as string;
+watch(query, (searchTerm: string) => {
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
+    }
+    debounceTimer = setTimeout(() => fetchResults(searchTerm.trim(), cheat.value), 150);
+});
+
+function customerUrl(id: number): string {
+    return route('customers.show', id);
 }
 
-function searchUrl(searchTerm: string, cheatFlag: boolean) {
-    return route('customers.search', { q: searchTerm, cheat_to_make_faster: cheatFlag }) as string;
+function searchUrl(searchTerm: string, cheatFlag: boolean): string {
+    return route('customers.search', { q: searchTerm, cheat_to_make_faster: cheatFlag });
 }
 
-async function fetchResults(searchTerm: string, cheatFlag: boolean) {
+async function fetchResults(searchTerm: string, cheatFlag: boolean): Promise<void> {
     if (!searchTerm) {
-        if (currentController) {
-            currentController.abort();
-            currentController = null;
+        if (abortController) {
+            abortController.abort();
+            abortController = null;
         }
         results.value = [];
         loading.value = false;
         return;
     }
 
-    if (currentController) {
-        currentController.abort();
+    if (abortController) {
+        abortController.abort();
     }
 
-    currentController = new AbortController();
-    const controller = currentController;
+    abortController = new AbortController();
+    const controller = abortController;
     const signal = controller.signal;
 
     loading.value = true;
     try {
         const url = searchUrl(searchTerm, cheatFlag);
         const response = await fetch(url, { credentials: 'same-origin', signal });
+
         if (!response.ok) {
-            results.value = [];
-            return;
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
+
         const json = await response.json();
         results.value = (json.customers ?? []) as CustomerSearchResult[];
-    } catch (err) {
-        if ((err as any)?.name === 'AbortError') {
+    } catch (error) {
+        if (error instanceof Error && error.name === 'AbortError') {
             return;
         }
         results.value = [];
+        console.warn('Search request failed:', error);
     } finally {
-        // Only clear the shared reference if it still points to this
-        // fetch's controller. Another fetch may have replaced
-        // `currentController` while this one was running.
-        if (currentController === controller) {
-            currentController = null;
+        if (abortController === controller) {
+            abortController = null;
         }
         loading.value = false;
     }
 }
 
-function formatPence(pence: number) {
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: 'GBP' }).format((pence ?? 0) / 100);
+function formatPence(pence: number): string {
+    return currencyFormatter.format((pence ?? 0) / 100);
 }
 
 onUnmounted(() => {
-    if (timer) {
-        clearTimeout(timer);
+    if (debounceTimer) {
+        clearTimeout(debounceTimer);
     }
-    if (currentController) {
-        currentController.abort();
+    if (abortController) {
+        abortController.abort();
     }
 });
 </script>
 
 <template>
     <div class="w-full max-w-md">
-        <label class="block text-sm font-medium text-muted-foreground">Search Customers</label>
+        <label for="customer-search" class="block text-sm font-medium text-muted-foreground">
+            Search Customers
+        </label>
+
         <div class="mt-2 flex items-center gap-2">
-            <input id="cheat" type="checkbox" v-model="cheat" class="h-4 w-4 rounded border" />
-            <label for="cheat" class="text-sm text-muted-foreground">Experimental AI search acceleration  ‧₊˚✧</label>
+            <input
+                id="cheat"
+                v-model="cheat"
+                type="checkbox"
+                class="h-4 w-4 rounded border"
+            />
+            <label for="cheat" class="text-sm text-muted-foreground">
+                Experimental AI search acceleration ‧₊˚✧
+            </label>
         </div>
 
         <input
+            id="customer-search"
             v-model="query"
             type="text"
             class="mt-1 block w-full rounded-md border p-2"
@@ -110,13 +128,22 @@ onUnmounted(() => {
         />
 
         <div class="mt-2 rounded border bg-card p-2">
-            <div v-if="loading" class="text-sm text-muted-foreground">Searching…</div>
-            <div v-else-if="results.length === 0 && query" class="text-sm text-muted-foreground">No results</div>
-            <ul v-else class="divide-y">
-                <li v-for="c in results" :key="c.id" class="py-2">
-                    <Link :href="customerUrl(c.id)" class="flex justify-between items-center">
-                        <span>{{ c.full_name }}</span>
-                        <small class="text-muted-foreground">{{ formatPence(c.total_value_pence) }}</small>
+            <div v-if="loading" class="text-sm text-muted-foreground">
+                Searching…
+            </div>
+            <div v-else-if="showNoResults" class="text-sm text-muted-foreground">
+                No results found
+            </div>
+            <ul v-else-if="results.length > 0" class="divide-y">
+                <li v-for="customer in results" :key="customer.id" class="py-2">
+                    <Link
+                        :href="customerUrl(customer.id)"
+                        class="flex items-center justify-between hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                    >
+                        <span class="font-medium">{{ customer.full_name }}</span>
+                        <span class="text-sm text-muted-foreground">
+                            {{ formatPence(customer.total_value_pence) }}
+                        </span>
                     </Link>
                 </li>
             </ul>
