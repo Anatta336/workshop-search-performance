@@ -10,7 +10,7 @@ class CustomerSeeder extends Seeder
 {
     public function run(): void
     {
-        $totalToCreate = 100000;
+        $totalToCreate = 2000;
 
         $faker = Faker::create();
         $now = now();

@@ -40,7 +40,7 @@ git clone https://github.com/Anatta336/workshop-search-performance.git
 cd workshop-search-performance
 docker compose up -d
 docker compose run --rm composer install
-docker compose execute app php artisan migrate:fresh --seed
+docker compose exec app php artisan migrate:fresh --seed
 ```
 The seeders create a very large number of records and may take a couple of minutes to complete.
 

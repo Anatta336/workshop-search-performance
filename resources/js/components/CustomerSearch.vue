@@ -20,7 +20,9 @@ let timer: number | null = null;
 let currentController: AbortController | null = null;
 
 watch(query, (searchTerm: string) => {
-    if (timer) clearTimeout(timer);
+    if (timer) {
+        clearTimeout(timer);
+    }
     timer = window.setTimeout(() => fetchResults(searchTerm, cheat.value), 150) as unknown as number;
 });
 
@@ -54,13 +56,13 @@ async function fetchResults(searchTerm: string, cheatFlag: boolean) {
     loading.value = true;
     try {
         const url = searchUrl(searchTerm, cheatFlag);
-        const res = await fetch(url, { credentials: 'same-origin', signal });
-        if (!res.ok) {
+        const response = await fetch(url, { credentials: 'same-origin', signal });
+        if (!response.ok) {
             results.value = [];
             return;
         }
-        const json = await res.json();
-        results.value = (json.data ?? []) as CustomerSearchResult[];
+        const json = await response.json();
+        results.value = (json.customers ?? []) as CustomerSearchResult[];
     } catch (err) {
         if ((err as any)?.name === 'AbortError') {
             return;

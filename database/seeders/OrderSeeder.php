@@ -22,7 +22,7 @@ class OrderSeeder extends Seeder
             return;
         }
 
-        $ordersToCreateCount = 50000;
+        $ordersToCreateCount = 60000;
 
         // Preload to avoid repeated queries.
         $products = Product::all(['id', 'price_pence'])->values()->all();
