@@ -1,10 +1,10 @@
 # Search Performance
 This project has a customer search function that works correctly but was running very slow.
 
-Your predecessor fixed the performance by adding a checkbox, but after careful examination the checkbox also makes it ignore most the customers. Please do a better job.
+Your predecessor fixed the performance by adding a checkbox, but after careful examination the checkbox also makes it ignore most the customers and gets their total spend values wrong. Please do a better job.
 
 ## Project Details
-This is a project for learning. It's set up as a very minimal Laravel CRM with customers and orders. There's no support for editing any of the data, just viewing it and running a search on the customers.
+This is a project intended for learning with. It's set up as a very minimal Laravel CRM with customers and orders. There's no support for editing any of the data, just viewing it and running a search on the customers.
 
 Parts of how it is set up - especially the database - are intentionally done poorly so you can improve them.
 
@@ -50,11 +50,6 @@ If you need to change the ports used, edit the `.env` file.
 
 You should be able to either log in as `test@example.com` with `password!.` or register a new user and then log in.
 
-When the project is no longer needed:
-```
-docker compose stop
-```
-
 ### Normal use
 ```
 docker compose up -d
@@ -82,6 +77,22 @@ docker compose exec app php artisan test
 When the project is no longer needed:
 ```
 docker compose stop
+```
+
+### Laravel Boost
+This project supports the Laravel Boost local MCP server if you use an AI coding agent. Exactly how you set it up will vary between IDEs and agents, but this config for the MCP server may help for starting it up within the project's containers:
+```
+"laravel-boost": {
+    "command": "docker",
+    "args": [
+        "compose",
+        "exec",
+        "app",
+        "php",
+        "artisan",
+        "boost:mcp"
+    ]
+}
 ```
 
 ### Clean up
